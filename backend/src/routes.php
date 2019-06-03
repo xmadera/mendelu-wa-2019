@@ -129,6 +129,23 @@ $app->group('/api/auth', function() use ($app) {
         }
     });
 
+
+    $app->post('/deleteRoom', function (Request $request, Response $response, array $args) {
+        $rm = new Rooms($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['id'])) {
+                $rm->delete($data['id']);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
     $app->post('/rooms', function (Request $request, Response $response, array $args) {
         $rm = new Rooms($this->db);
         try {
@@ -137,6 +154,60 @@ $app->group('/api/auth', function() use ($app) {
                 $token = $request->getAttribute('token');
                 $userId = $token->getClaim('id');
                 $rm->add($data['title'], $userId);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
+    $app->post('/saveUserInRoom', function (Request $request, Response $response, array $args) {
+        $rm = new Rooms($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['roomId'])) {
+                $token = $request->getAttribute('token');
+                $userId = $token->getClaim('id');
+                $rm->saveUserInRoom($data['roomId'], $userId);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
+    $app->post('/deleteUserFromRoom', function (Request $request, Response $response, array $args) {
+        $rm = new Rooms($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['roomId'])) {
+                $token = $request->getAttribute('token');
+                $userId = $token->getClaim('id');
+                $rm->deleteUserFromRoom($data['roomId'], $userId);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
+    $app->post('/saveMessage', function (Request $request, Response $response, array $args) {
+        $rm = new Messages($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['text'])) {
+                $token = $request->getAttribute('token');
+                $userId = $token->getClaim('id');
+                $rm->saveMessage($data['roomId'], $userId, $data['text']);
                 return $response->withStatus(201);
             } else {
                 return $response->withStatus(400);
@@ -160,6 +231,37 @@ $app->group('/api/auth', function() use ($app) {
         } else {
             return $response->withStatus(400);
         }
+    });
+
+
+    $app->get('/users/{roomId}', function (Request $request, Response $response, array $args) {
+        if(!empty($args['roomId'])) {
+            $rm = new Users($this->db);
+            try {
+                $usersInRoom = $rm->inRoom($args['roomId']);
+                return $response->withJson($usersInRoom);
+            } catch (Exception $ex) {
+                $this->logger->error($ex->getMessage());
+                return $response->withStatus(500);
+            }
+        } else {
+            return $response->withStatus(400);
+        }
+    });
+
+
+    $app->get('/user', function (Request $request, Response $response, array $args) {
+        $rm = new Users($this->db);
+        try {
+            $token = $request->getAttribute('token');
+            $userLogin = $token->getClaim('login');
+            $userData = $rm->getByLogin($userLogin);
+            return $response->withJson($userData);
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+
     });
 
     // Place for other secured routes like GET /messages.

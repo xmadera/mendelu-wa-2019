@@ -1,36 +1,35 @@
 <template>
   <div class="text-center text-background">
-    <div class="text-left ml-5">
-      <router-link :to="{ name: 'homepage' }">
-        X
-      </router-link>
-    </div>
+    <b-row align-h="between">
+      <b-col cols="2">
+        <router-link :to="{ name: 'homepage' }">
+          X
+        </router-link>
+      </b-col>
+      <b-col cols="3">
+        <router-link :to="{ name: 'newroom' }">
+          Create room <font-awesome-icon icon="plus-square"/>
+        </router-link>
+      </b-col>
+    </b-row>
     <h1>Rooms</h1>
+    <hr>
     <table class="table table-borderless">
       <tr v-for="room in rooms">
         <td>
-          <router-link :to="{name: 'room', params: {id: room.id_rooms}}">
+          <router-link :to="{name: 'room', params: {id: room.id_rooms, title: room.title}}">
             {{room.title}}
           </router-link>
-        </td>
-        <td>
-          <b-button type="submit" variant="danger" class="btn btn-sm">
-            <font-awesome-icon icon="trash" />
-          </b-button>
         </td>
       </tr>
     </table>
     <hr>
-    <new-room></new-room>
-    <!--<button v-on:click="loadRooms">Obnovit</button>-->
   </div>
 </template>
 
 <script>
-import NewRoom from '@/views/NewRoom';
 
 export default {
-    components: {NewRoom},
     data() {
         return {
             rooms: []

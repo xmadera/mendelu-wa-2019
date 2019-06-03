@@ -39,4 +39,12 @@ from users where login = :l');
         return null;
     }
 
+    function inRoom($roomId) {
+        $stmt = $this->db->prepare('SELECT * FROM users JOIN in_room ON (in_room.id_users=users.id_users) 
+WHERE in_room.id_rooms = :roomId');
+        $stmt->bindValue(':roomId', $roomId);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
 }

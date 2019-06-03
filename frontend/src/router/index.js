@@ -6,6 +6,9 @@ import Register from '@/views/Register';
 import AuthSection from '@/views/AuthSection';
 import Room from '@/views/Room';
 import Homepage from '@/views/Homepage';
+import Newroom from '@/views/NewRoom';
+import Profile from '@/views/Profile';
+
 
 Vue.use(Router);
 
@@ -43,7 +46,18 @@ export default new Router({
                     path: '/rooms/:id',
                     name: 'room',
                     component: Room
+                },
+                {
+                    path: '/newroom',
+                    name: 'newroom',
+                    component: Newroom
+                },
+                {
+                    path: '/profile',
+                    name: 'profile',
+                    component: Profile
                 }
+
             ]
         },
     ]

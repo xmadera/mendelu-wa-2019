@@ -2,8 +2,11 @@
     <div>
         <b-navbar toggleable="lg" type="dark" variant="dark" fixed="top">
             <b-navbar-brand href="/">Home</b-navbar-brand>
-
-            <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
+            <div v-if="isLoggedIn">
+                <router-link :to="{name: 'profile'}">
+                    Profile <font-awesome-icon icon="user"/>
+                </router-link>
+            </div>
 
 
                 <!-- Right aligned nav items -->
@@ -33,6 +36,7 @@
                 return token !== null && token !== undefined;
             }
         },
+
         methods: {
             login: function () {
                 this.$router.push({name: 'login'});

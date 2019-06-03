@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="text-center text-background">
         <h3>Create rooms</h3>
         <b-form @submit.prevent="createRoom" class="form-create text-left">
             <b-form-group
@@ -36,6 +36,7 @@
                 }).then(() => {
                     this.name = "";
                     alert("Mistnost vytvorena");
+                    this.$router.push({name: 'rooms'});
                 }).catch(() => {
                     alert("Chyba");
                 })
@@ -50,6 +51,16 @@
     .form-create {
         max-width: 50%;
         margin: auto;
+    }
+
+    .text-background {
+        margin-top: 7em;
+        margin-bottom: 7em;
+        padding-top: 2em;
+        padding-bottom: 3em;
+        border-radius: 6px;
+        font-weight: bold;
+        background:rgba(255,255,255, 0.6);
     }
 
 </style>
