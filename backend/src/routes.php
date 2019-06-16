@@ -130,19 +130,19 @@ $app->group('/api/auth', function() use ($app) {
     });
 
 
-    $app->post('/deleteRoom', function (Request $request, Response $response, array $args) {
+    $app->delete('/deleteRoom/{roomId}', function (Request $request, Response $response, array $args) {
+        if(!empty($args['roomId'])) {
         $rm = new Rooms($this->db);
         try {
-            $data = $request->getParsedBody();
-            if(!empty($data['id'])) {
-                $rm->delete($data['id']);
+                $rm->delete($args['roomId']);
                 return $response->withStatus(201);
-            } else {
-                return $response->withStatus(400);
-            }
+
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return $response->withStatus(500);
+        }
+        } else {
+            return $response->withStatus(400);
         }
     });
 
@@ -182,22 +182,22 @@ $app->group('/api/auth', function() use ($app) {
         }
     });
 
-    $app->post('/deleteUserFromRoom', function (Request $request, Response $response, array $args) {
-        $rm = new Rooms($this->db);
+    $app->delete('/deleteUserFromRoom/{roomId}', function (Request $request, Response $response, array $args) {
+        if(!empty($args['roomId'])) {
+            $rm = new Rooms($this->db);
         try {
-            $data = $request->getParsedBody();
-            if(!empty($data['roomId'])) {
                 $token = $request->getAttribute('token');
                 $userId = $token->getClaim('id');
-                $rm->deleteUserFromRoom($data['roomId'], $userId);
+                $rm->deleteUserFromRoom($args['roomId'], $userId);
                 return $response->withStatus(201);
-            } else {
-                return $response->withStatus(400);
-            }
+
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return $response->withStatus(500);
         }
+             } else {
+                return $response->withStatus(400);
+            }
     });
 
     $app->post('/saveMessage', function (Request $request, Response $response, array $args) {

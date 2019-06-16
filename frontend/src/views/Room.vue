@@ -103,10 +103,8 @@
             },
 
             deleteRoom() {
-                this.$http.post('/api/auth/deleteRoom', {
-                    id: this.roomId
-                }).then(() => {
-                    this.id = null;
+                this.$http.delete('api/auth/deleteRoom/' + this.roomId)
+                .then(() => {
                     alert("Room deleted");
                     this.$router.push({name: 'rooms'});
                 }).catch(() => {
@@ -144,11 +142,10 @@
             },
 
             deleteUserFromRoom() {
-                this.$http.post('/api/auth/deleteUserFromRoom', {
-                    roomId: this.roomId
-                }).then(() => {
-                    }
-                ).catch(() => {
+                this.$http.delete('api/auth/deleteUserFromRoom/' + this.roomId)
+                    .then(() => {
+                        this.$router.push({name: 'rooms'});
+                    }).catch(() => {
                     alert("Error");
                 })
             },

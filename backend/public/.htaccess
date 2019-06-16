@@ -21,3 +21,7 @@
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteRule ^ index.php [QSA,L]
 </IfModule>
+
+<Limit GET POST PUT DELETE OPTIONS>
+  Allow from all
+</Limit>
