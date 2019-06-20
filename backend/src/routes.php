@@ -182,6 +182,54 @@ $app->group('/api/auth', function() use ($app) {
         }
     });
 
+    $app->post('/kickUser', function (Request $request, Response $response, array $args) {
+        $rm = new Users($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['roomId'])) {
+                $rm->kickUser($data['userId'], $data['roomId']);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
+    $app->put('/lockRoom', function (Request $request, Response $response, array $args) {
+        $rm = new Rooms($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['roomId'])) {
+                $rm->lockRoom($data['roomId']);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
+    $app->put('/unlockRoom', function (Request $request, Response $response, array $args) {
+        $rm = new Rooms($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['roomId'])) {
+                $rm->unlockRoom($data['roomId']);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
     $app->delete('/deleteUserFromRoom/{roomId}', function (Request $request, Response $response, array $args) {
         if(!empty($args['roomId'])) {
             $rm = new Rooms($this->db);
@@ -257,6 +305,18 @@ $app->group('/api/auth', function() use ($app) {
             $userLogin = $token->getClaim('login');
             $userData = $rm->getByLogin($userLogin);
             return $response->withJson($userData);
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+
+    });
+
+    $app->get('/users', function (Request $request, Response $response, array $args) {
+        $rm = new Users($this->db);
+        try {
+            $usersData = $rm->allUsers();
+            return $response->withJson($usersData);
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return $response->withStatus(500);

@@ -11,6 +11,9 @@ import {faArrowRight} from "@fortawesome/free-solid-svg-icons/faArrowRight";
 import {faPlusSquare} from "@fortawesome/free-solid-svg-icons/faPlusSquare";
 import {faTrash} from "@fortawesome/free-solid-svg-icons/faTrash";
 import {faUser} from "@fortawesome/free-solid-svg-icons/faUser";
+import {faUserMinus} from "@fortawesome/free-solid-svg-icons/faUserMinus";
+import {faLock} from "@fortawesome/free-solid-svg-icons/faLock";
+import {faLockOpen} from "@fortawesome/free-solid-svg-icons/faLockOpen";
 
 // nastaveni knihovny pro synchronizaci dat
 const axios = Axios.create();
@@ -29,7 +32,10 @@ library.add(faSignInAlt);
 library.add(faArrowRight);
 library.add(faPlusSquare);
 library.add(faTrash);
-library.add(faUser)
+library.add(faUser);
+library.add(faUserMinus);
+library.add(faLock);
+library.add(faLockOpen);
 Vue.component('font-awesome-icon', FontAwesomeIcon);
 
 

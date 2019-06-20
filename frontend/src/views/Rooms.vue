@@ -17,9 +17,15 @@
     <table class="table table-borderless">
       <tr v-for="room in rooms">
         <td>
-          <router-link :to="{name: 'room', params: {id: room.id_rooms, title: room.title}}">
-            {{room.title}}
-          </router-link>
+          <div v-if="room.lock == true && room.id_users_owner != userData.id_users">
+            {{room.title}} (locked)
+
+          </div>
+          <div v-else>
+            <router-link :to="{name: 'room', params: {id: room.id_rooms}}" v-on:click.native="saveUserInRoom(room.id_rooms)">
+              {{room.title}}
+            </router-link>
+          </div>
         </td>
       </tr>
     </table>
@@ -36,15 +42,40 @@ export default {
         }
     },
     mounted() {
+      this.loadRooms();
+      this.user();
+
+      this.reloader = setInterval(() => {
         this.loadRooms();
+      }, 1000); // zavola metodu pro stazeni dat kazdou vterinu
     },
+  // pred zrusenim komponenty
+  beforeDestroy() {
+    clearInterval(this.reloader);
+  },
     methods: {
         loadRooms() {
             this.$http.get('api/auth/rooms')
                 .then(response => {
                     this.rooms = response.data;
                 });
-        }
+        },
+      saveUserInRoom(id) {
+        this.$http.post('/api/auth/saveUserInRoom', {
+          roomId: id
+        }).then(() => {
+                }
+        ).catch(() => {
+          alert("Error adding user in room");
+        })
+      },
+
+      user() {
+        this.$http.get('api/auth/user')
+                .then(response => {
+                  this.userData = response.data;
+                })
+      }
     }
 }
 </script>

@@ -47,4 +47,19 @@ WHERE in_room.id_rooms = :roomId');
         return $stmt->fetchAll();
     }
 
+    function allUsers() {
+        $stmt = $this->db->prepare('select * 
+from users');
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    function kickUser($userId, $roomId) {
+        $stmt = $this->db->prepare(
+            'INSERT INTO room_kick (id_users, id_rooms, created) VALUES (:userId, :roomId, NOW())');
+        $stmt->bindValue(':roomId', $roomId);
+        $stmt->bindValue(':userId', $userId);
+        return $stmt->execute();
+    }
+
 }

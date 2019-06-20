@@ -48,4 +48,16 @@ class Rooms extends Model {
         $stmt->execute();
     }
 
+    function lockRoom($roomId) {
+        $stmt = $this->db->prepare('UPDATE rooms SET lock = true WHERE id_rooms = :roomId');
+        $stmt->bindValue(':roomId', $roomId);
+        $stmt->execute();
+    }
+
+    function unlockRoom($roomId) {
+        $stmt = $this->db->prepare('UPDATE rooms SET lock = false WHERE id_rooms = :roomId');
+        $stmt->bindValue(':roomId', $roomId);
+        $stmt->execute();
+    }
+
 }
