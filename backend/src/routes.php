@@ -198,12 +198,44 @@ $app->group('/api/auth', function() use ($app) {
         }
     });
 
+    $app->post('/deleteUserFromRoom', function (Request $request, Response $response, array $args) {
+        $rm = new Rooms($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['userId']) AND !empty($data['roomId'])) {
+                $rm->deleteUserFromRoom($data['roomId'], $data['userId']);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
     $app->put('/lockRoom', function (Request $request, Response $response, array $args) {
         $rm = new Rooms($this->db);
         try {
             $data = $request->getParsedBody();
             if(!empty($data['roomId'])) {
                 $rm->lockRoom($data['roomId']);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
+    $app->put('/updateUser', function (Request $request, Response $response, array $args) {
+        $rm = new Users($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['userLogin']) AND !empty($data['gender'])) {
+                $rm->updateUser($data['userLogin'], $data['name'], $data['surname'], $data['email'], $data['gender']);
                 return $response->withStatus(201);
             } else {
                 return $response->withStatus(400);
@@ -228,24 +260,6 @@ $app->group('/api/auth', function() use ($app) {
             $this->logger->error($ex->getMessage());
             return $response->withStatus(500);
         }
-    });
-
-    $app->delete('/deleteUserFromRoom/{roomId}', function (Request $request, Response $response, array $args) {
-        if(!empty($args['roomId'])) {
-            $rm = new Rooms($this->db);
-        try {
-                $token = $request->getAttribute('token');
-                $userId = $token->getClaim('id');
-                $rm->deleteUserFromRoom($args['roomId'], $userId);
-                return $response->withStatus(201);
-
-        } catch (Exception $ex) {
-            $this->logger->error($ex->getMessage());
-            return $response->withStatus(500);
-        }
-             } else {
-                return $response->withStatus(400);
-            }
     });
 
     $app->post('/saveMessage', function (Request $request, Response $response, array $args) {
@@ -317,6 +331,25 @@ $app->group('/api/auth', function() use ($app) {
         try {
             $usersData = $rm->allUsers();
             return $response->withJson($usersData);
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+
+    });
+
+    $app->get('/userKick', function (Request $request, Response $response, array $args) {
+        $rm = new Rooms($this->db);
+        try {
+            $token = $request->getAttribute('token');
+            $userId = $token->getClaim('id');
+            $data = $request->getParsedBody();
+//            if(!empty($data['roomId'])) {
+                $data = $rm->userKick(1, $data['roomId']);
+                return $response->withJson($data);
+//            } else {
+//                return $response->withStatus(400);
+//            }
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return $response->withStatus(500);

@@ -60,4 +60,11 @@ class Rooms extends Model {
         $stmt->execute();
     }
 
+    function userKick($userId, $roomId) {
+        $stmt = $this->db->query('SELECT * FROM room_kick WHERE = id_users = :userId AND id_rooms = :roomId');
+        $stmt->bindValue(':userId', $userId);
+        $stmt->bindValue(':roomId', $roomId);
+        return $stmt->fetch();
+    }
+
 }

@@ -2,16 +2,15 @@
     <div class="text-center text-background">
         <b-row align-h="start">
             <b-col cols="2">
-            <router-link :to="{ name: 'homepage' }" v-on:click.native="deleteUserFromRoom">
+            <router-link :to="{ name: 'homepage' }" v-on:click.native="deleteUserFromRoom(userData.id_users)">
                 Leave room
             </router-link>
             </b-col>
         </b-row>
 
-        <div v-if="userData.id_users == roomData.id_users_owner">
+        <template v-if="userData.id_users == roomData.id_users_owner">
 
             <b-row align-h="end" class="adminSettings">
-
 
             <b-col cols="4">
                 <div v-if="roomData.lock == false">
@@ -32,7 +31,7 @@
         </b-button>
             </b-col>
             </b-row>
-    </div>
+    </template>
 
         <b-row align-h="between" class="mt-5">
             <b-col cols="5">
@@ -52,7 +51,7 @@
                     {{user.login}}
                         </div>
                     <div v-if="userData.id_users == roomData.id_users_owner && userData.id_users != user.id_users">
-                        <b-button type="submit" variant="danger" class="btn btn-sm" v-on:click="kickUser(user.id_users)">
+                        <b-button type="submit" variant="danger" class="btn btn-sm" v-on:click="handler(user.id_users)">
                         <font-awesome-icon icon="user-minus"/>
                         </b-button>
                     </div>
@@ -105,9 +104,10 @@
                 messages: [],
                 usersInRoom: [],
                 reloader: null,
-                userData: null,
+                userData: '',
                 usersData: [],
-                roomData: null
+                roomData: '',
+                text: null,
             }
         },
         created () {
@@ -126,8 +126,8 @@
             this.room();
 
             this.reloader = setInterval(() => {
-                this.loadMessages();
                 this.inRoom();
+                this.loadMessages();
             }, 1000); // zavola metodu pro stazeni dat kazdou vterinu
         },
         // pred zrusenim komponenty
@@ -171,12 +171,25 @@
                     })
                 },
 
-            deleteUserFromRoom() {
-                this.$http.delete('api/auth/deleteUserFromRoom/' + this.roomId)
-                    .then(() => {
-                        this.$router.push({name: 'rooms'});
-                    }).catch(() => {
-                    alert("Error deleting user");
+            deleteUserFromRoom(id) {
+                this.$http.post('/api/auth/deleteUserFromRoom', {
+                    roomId: this.roomId,
+                    userId: id
+                }).then(() => {
+                    }
+                ).catch(() => {
+                    alert("Error deleting user from room");
+                })
+            },
+
+            kickUser(id) {
+                this.$http.post('/api/auth/kickUser', {
+                    roomId: this.roomId,
+                    userId: id
+                }).then(() => {
+                    }
+                ).catch(() => {
+                    alert("Error kicking user");
                 })
             },
 
@@ -201,16 +214,6 @@
                     })
             },
 
-            kickUser(id) {
-                this.$http.post('/api/auth/kickUser', {
-                    roomId: this.roomId,
-                    userId: id
-                }).then(() => {
-                    }
-                ).catch(() => {
-                    alert("Error kicking user");
-                })
-            },
             lockRoom() {
                 this.$http.put('/api/auth/lockRoom', {
                     roomId: this.roomId
@@ -228,6 +231,11 @@
                 ).catch(() => {
                     alert("Error while unlocking room");
                 })
+            },
+
+            handler: function(id) {
+                    this.deleteUserFromRoom(id);
+                    this.kickUser(id);
             }
         }
 

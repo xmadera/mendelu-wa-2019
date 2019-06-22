@@ -63,7 +63,7 @@
             </b-col>
         </b-row>
             <div class="text-center">
-                <b-button type="submit" variant="outline-primary">
+                <b-button type="submit" variant="outline-primary" v-on:click="updateUser">
                     <font-awesome-icon icon="plus-square" />
                     Edit
                 </b-button>
@@ -79,14 +79,11 @@
             return {
                 userData: null,
                 gender: null,
-                Genders: [{ text: 'Select One', value: null },"Male", "Female"]
+                Genders: [{ text: 'Select One', value: null },"male", "female"]
             }
         },
 
         mounted() {
-            const login = this.$route.params.login;
-            this.login = login;
-
             this.user();
         },
 
@@ -96,6 +93,18 @@
                     .then(response => {
                         this.userData = response.data;
                     })
+            },
+
+            updateUser: function() {
+                this.$http.put('/api/auth/updateUser', {
+                    userLogin: this.userData.login,
+                    name: this.userData.name,
+                    surname: this.userData.surname,
+                    email: this.userData.email,
+                    gender: this.gender
+                }).then(() => { window.location.reload();
+                    }
+                )
             }
         }
     }

@@ -62,4 +62,15 @@ from users');
         return $stmt->execute();
     }
 
+    function updateUser($userLogin, $name, $surname, $email, $gender) {
+        $stmt = $this->db->prepare(
+            'UPDATE users SET name = :name, surname = :surname, email = :email, gender = :gender WHERE login = :userLogin');
+        $stmt->bindValue(':userLogin', $userLogin);
+        $stmt->bindValue(':name', $name);
+        $stmt->bindValue(':surname', $surname);
+        $stmt->bindValue(':email', $email);
+        $stmt->bindValue(':gender', $gender);
+        $stmt->execute();
+    }
+
 }

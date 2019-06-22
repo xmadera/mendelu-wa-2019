@@ -17,9 +17,12 @@
     <table class="table table-borderless">
       <tr v-for="room in rooms">
         <td>
-          <div v-if="room.lock == true && room.id_users_owner != userData.id_users">
+          {{userKick(room.id_rooms)}}
+            <div v-if="kickData">
+              {{room.title}}(You have been kicked)
+          </div>
+          <div v-else-if="room.lock == true && room.id_users_owner != userData.id_users">
             {{room.title}} (locked)
-
           </div>
           <div v-else>
             <router-link :to="{name: 'room', params: {id: room.id_rooms}}" v-on:click.native="saveUserInRoom(room.id_rooms)">
@@ -38,16 +41,17 @@
 export default {
     data() {
         return {
-            rooms: []
+            rooms: [],
+          userData: '',
+          kickData: ''
         }
     },
     mounted() {
-      this.loadRooms();
       this.user();
-
+      this.loadRooms();
       this.reloader = setInterval(() => {
         this.loadRooms();
-      }, 1000); // zavola metodu pro stazeni dat kazdou vterinu
+      }, 5000); // zavola metodu pro stazeni dat kazdou vterinu
     },
   // pred zrusenim komponenty
   beforeDestroy() {
@@ -67,6 +71,16 @@ export default {
                 }
         ).catch(() => {
           alert("Error adding user in room");
+        })
+      },
+
+      userKick(id) {
+        this.$http.get('/api/auth/userKick', {
+          roomId: id
+        }).then(() => {
+                }
+        ).catch(() => {
+          // alert("Error");
         })
       },
 
