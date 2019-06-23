@@ -60,11 +60,16 @@ class Rooms extends Model {
         $stmt->execute();
     }
 
-    function userKick($userId, $roomId) {
-        $stmt = $this->db->query('SELECT * FROM room_kick WHERE = id_users = :userId AND id_rooms = :roomId');
-        $stmt->bindValue(':userId', $userId);
+    function kicks() {
+        $stmt = $this->db->query('SELECT * FROM room_kick');
+        return $stmt->fetchAll();
+    }
+
+    function updateOwner($userId, $roomId) {
+        $stmt = $this->db->prepare('UPDATE rooms SET id_users_owner = :userId WHERE id_rooms = :roomId');
         $stmt->bindValue(':roomId', $roomId);
-        return $stmt->fetch();
+        $stmt->bindValue(':userId', $userId);
+        $stmt->execute();
     }
 
 }

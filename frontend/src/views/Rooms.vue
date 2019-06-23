@@ -17,8 +17,7 @@
     <table class="table table-borderless">
       <tr v-for="room in rooms">
         <td>
-          {{userKick(room.id_rooms)}}
-            <div v-if="kickData">
+            <div v-if="isKicked(room.id_rooms)">
               {{room.title}}(You have been kicked)
           </div>
           <div v-else-if="room.lock == true && room.id_users_owner != userData.id_users">
@@ -43,20 +42,24 @@ export default {
         return {
             rooms: [],
           userData: '',
-          kickData: ''
+          kickData: [],
         }
     },
     mounted() {
       this.user();
+      this.Kicks();
       this.loadRooms();
+
       this.reloader = setInterval(() => {
+        this.Kicks();
         this.loadRooms();
-      }, 5000); // zavola metodu pro stazeni dat kazdou vterinu
+      }, 2000); // zavola metodu pro stazeni dat
     },
   // pred zrusenim komponenty
   beforeDestroy() {
     clearInterval(this.reloader);
   },
+
     methods: {
         loadRooms() {
             this.$http.get('api/auth/rooms')
@@ -70,18 +73,15 @@ export default {
         }).then(() => {
                 }
         ).catch(() => {
-          alert("Error adding user in room");
         })
       },
 
-      userKick(id) {
-        this.$http.get('/api/auth/userKick', {
-          roomId: id
-        }).then(() => {
-                }
-        ).catch(() => {
-          // alert("Error");
+      Kicks() {
+        this.$http.get('api/auth/kicks', {
         })
+                .then(response => {
+                  this.kickData = response.data;
+                })
       },
 
       user() {
@@ -89,6 +89,14 @@ export default {
                 .then(response => {
                   this.userData = response.data;
                 })
+      },
+      isKicked(id) {
+        for (let i = 0; i < this.kickData.length; i++) {
+          if (this.kickData[i].id_rooms == id && this.kickData[i].id_users == this.userData.id_users) {
+              return true
+          }
+        }
+        return false;
       }
     }
 }

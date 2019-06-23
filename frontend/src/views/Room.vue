@@ -2,7 +2,7 @@
     <div class="text-center text-background">
         <b-row align-h="start">
             <b-col cols="2">
-            <router-link :to="{ name: 'homepage' }" v-on:click.native="deleteUserFromRoom(userData.id_users)">
+            <router-link :to="{ name: 'rooms' }" v-on:click.native="handlerLeave(userData.id_users)">
                 Leave room
             </router-link>
             </b-col>
@@ -57,24 +57,38 @@
                     </div>
                     </b-row>
                     </div>
+                <br>
+                <div v-if="userData.id_users == roomData.id_users_owner">
+                <b>Kicked users:</b>
+                <div v-for="user in usersData">
+                    <b-row align-h="center">
+                    <div v-if="isKicked(user.id_users)">
+                    {{user.login}}
+                        <b-button type="submit" variant="info" class="btn btn-sm" v-on:click="removeKick(user.id_users)">
+                            <font-awesome-icon icon="user-plus"/>
+                        </b-button>
+                    </div>
+                    </b-row>
+                </div>
+                </div>
             </b-col>
             <b-col cols="7">
         <div v-if="messages.length > 0" class="chat" id="style-5">
             <div v-for="message in messages">
-        <div class="person1 text-left mr-5 mt-2" v-if="message.login == userData.login">
-           <b>{{message.login}}</b>: {{message.message}}
+        <div class="person1 text-left mt-2" v-if="message.login == userData.login">
+            {{message.created.substring(11,16)}}<b> {{message.login}}</b>: {{message.message}}
         </div>
-            <div class="person2 text-right mr-5 mt-2" v-else>
-                <b>{{message.login}}</b>: {{message.message}}
+            <div class="person2 text-right mt-2" v-else-if="message.id_users_to == null || message.id_users_to == userdData.id_users">
+                {{message.created.substring(11,16)}} <b> {{message.login}}</b>: {{message.message}}
             </div>
             </div>
     </div>
     <div v-else>
         No messages yet
     </div>
-        <b-form @submit.prevent="saveMessage">
-        <b-row align-h="end" class="mt-2 mr-5">
-            <b-col cols="10">
+        <b-form @submit.prevent="saveMessage()">
+        <b-row align-h="end" class="mt-2">
+            <b-col cols="7">
         <b-form-input class="chatInput"
                 id="message"
                 v-model="text"
@@ -82,6 +96,15 @@
                 required
                 placeholder="Write your message"
         ></b-form-input>
+            </b-col>
+                <b-col cols="3">
+                    <span>To: </span>
+                <b-form-select v-model="selected">
+                    <template slot="first">
+                        <option :value="null">All</option>
+                    </template>
+                <option v-for="user in usersInRoom" v-if="user.id_users != userData.id_users" :value="user.id_users">{{user.login}}</option>
+                </b-form-select>
             </b-col>
             <b-col cols="2">
                 <b-button type="submit" variant="info" class="btn btn-md chatInput">
@@ -100,18 +123,20 @@
         name: "Room",
         data() {
             return {
+                selected: null,
                 roomId: null,
                 messages: [],
                 usersInRoom: [],
                 reloader: null,
+                reloaderremoveUser: null,
                 userData: '',
                 usersData: [],
                 roomData: '',
                 text: null,
+                kickData: [],
+                possibleOwners: [],
+                userMessages: []
             }
-        },
-        created () {
-            window.addEventListener('beforeunload', this.deleteUserFromRoom)
         },
 
         // po nacteni komponenty
@@ -120,19 +145,48 @@
             this.roomId = roomId;
 
             this.user();
-
             this.users();
-
             this.room();
 
+
             this.reloader = setInterval(() => {
-                this.inRoom();
-                this.loadMessages();
-            }, 1000); // zavola metodu pro stazeni dat kazdou vterinu
-        },
+            this.Kicks();
+            this.checkKicks();
+            this.inRoom();
+            this.users();
+            this.room();
+            this.isAllowed();
+            this.loadMessages();
+        }, 1000); // zavola metodu pro stazeni dat kazdou vterinu
+
+            this.reloaderremoveUser = setInterval(() => {
+                const time = 500 * 60 * 60;
+                var k=0;
+                if (this.messages.length > 0) {
+
+                    for (let i = 0; i < this.messages.length; i++) {
+                        console.log(Date.now() - Date.parse(this.messages[0].created));
+                        if (this.messages[i].id_users == this.userData.id_users) {
+                            this.userMessages[k] = this.messages[i];
+                            k++;
+                        }
+                    }
+
+                    const minus = Date.now() - 216000 - Date.parse(this.messages[this.messages.length-1].created);
+
+                    if (minus > time) {
+                        console.log(minus);
+                        this.deleteUserFromRoom(this.userData.id_users);
+                        this.$router.push({name: 'rooms'});
+                        alert("You have been kicked due to inactivity");
+                        }
+                }
+            }, 500 * 60 * 50); // zavola metodu pro stazeni dat
+    },
         // pred zrusenim komponenty
         beforeDestroy() {
             clearInterval(this.reloader);
+            clearInterval(this.reloaderremoveUser);
         },
         methods: {
             loadMessages() {
@@ -148,14 +202,15 @@
                     alert("Room deleted");
                     this.$router.push({name: 'rooms'});
                 }).catch(() => {
-                    alert("Error");
+                    alert("Error deleting room");
                 })
             },
 
             saveMessage() {
                 this.$http.post('/api/auth/saveMessage', {
                     roomId: this.roomId,
-                    text: this.text
+                    text: this.text,
+                    recipient: this.selected
                 }).then(() => {
                         this.text = "";
                     }
@@ -190,6 +245,17 @@
                     }
                 ).catch(() => {
                     alert("Error kicking user");
+                })
+            },
+
+            removeKick(id) {
+                this.$http.post('/api/auth/removeKick', {
+                    roomId: this.roomId,
+                    userId: id
+                }).then(() => {
+                    }
+                ).catch(() => {
+                    alert("Error removing kick");
                 })
             },
 
@@ -233,9 +299,78 @@
                 })
             },
 
+            Kicks() {
+                this.$http.get('api/auth/kicks', {
+                })
+                    .then(response => {
+                        this.kickData = response.data;
+                    })
+            },
+
+            checkKicks() {
+                for (let i = 0; i < this.kickData.length; i++) {
+                    if (this.kickData[i].id_rooms == this.roomId && this.kickData[i].id_users == this.userData.id_users) {
+                        this.$router.push({ name: 'rooms' });
+                        alert("You have been kicked");
+                    }
+                }
+            },
+
+            isAllowed() {
+                if (this.roomData.lock == true) {
+                    for (let i = 0; i < this.usersInRoom.length; i++) {
+                        if (this.usersInRoom[i].id_users != this.userData.id_users) {
+                            this.$router.push({name: 'rooms'});
+                            alert("This room is locked");
+                        }
+                    }
+                }
+                },
+
             handler: function(id) {
-                    this.deleteUserFromRoom(id);
-                    this.kickUser(id);
+                this.deleteUserFromRoom(id);
+                this.kickUser(id);
+
+                this.timer = setTimeout(() => {
+                    this.removeKick(id)
+                }, 300000);
+            },
+
+            handlerLeave: function(id) {
+                this.deleteUserFromRoom(id);
+                if (id == this.roomData.id_users_owner) {
+                    this.ownerLeaves();
+                }
+            },
+
+            isKicked(id) {
+                for (let i = 0; i < this.kickData.length; i++) {
+                    if (this.kickData[i].id_rooms == this.roomId && this.kickData[i].id_users == id) {
+                        return true
+                    }
+                }
+                return false;
+            },
+
+            updateOwner(id) {
+                this.$http.put('/api/auth/updateOwner', {
+                    roomId: this.roomId,
+                    userId: id
+                }).then(() => {
+                    }
+                ).catch(() => {
+                    alert("Error while updating owner");
+                })
+            },
+
+            ownerLeaves() {
+                    if (this.usersInRoom.length > 0) {
+                        for (let i = 0; i < this.usersInRoom.length; i++) {
+                             this.possibleOwners[i] = this.usersInRoom[i].id_users;
+                        }
+                        var rand = this.possibleOwners[Math.floor(Math.random() * this.possibleOwners.length)];
+                        this.updateOwner(rand);
+                }
             }
         }
 
@@ -252,24 +387,28 @@
         padding-bottom: 3em;
         border-radius: 6px;
         font-size: 18px;
+        white-space: nowrap;
     }
 
     .chat {
         font-size: 14px;
         font-weight: normal;
-        max-height: 300px;
+        height: 330px;
         overflow: auto;
         margin-right: 0.3em;
+        background:rgba(51,51,51,0.3);
+        padding: 0.4em;
+        border-radius: 10px;
     }
 
     .person1 {
-        background:rgba(255,255,255, 0.8);
+        background:rgba(255,255,255, 0.9);
         padding: 0.5em;
         border-radius: 10px;
     }
 
     .person2 {
-        background:rgba(255,255,255, 0.6);
+        background:rgba(255,255,255, 0.8);
         padding: 0.5em;
         border-radius: 10px;
     }

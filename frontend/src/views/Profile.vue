@@ -77,7 +77,7 @@
         name: "Profile",
         data() {
             return {
-                userData: null,
+                userData: '',
                 gender: null,
                 Genders: [{ text: 'Select One', value: null },"male", "female"]
             }

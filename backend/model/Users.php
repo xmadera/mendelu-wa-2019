@@ -62,6 +62,14 @@ from users');
         return $stmt->execute();
     }
 
+    function removeKick($userId, $roomId) {
+        $stmt = $this->db->prepare(
+            'DELETE FROM room_kick WHERE id_users = :userId AND id_rooms = :roomId');
+        $stmt->bindValue(':roomId', $roomId);
+        $stmt->bindValue(':userId', $userId);
+        return $stmt->execute();
+    }
+
     function updateUser($userLogin, $name, $surname, $email, $gender) {
         $stmt = $this->db->prepare(
             'UPDATE users SET name = :name, surname = :surname, email = :email, gender = :gender WHERE login = :userLogin');

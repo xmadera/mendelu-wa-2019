@@ -1,5 +1,12 @@
 <template>
     <div class="text-center text-background">
+        <b-row align-h="start">
+            <b-col cols="2">
+                <router-link :to="{ name: 'rooms' }">
+                    X
+                </router-link>
+            </b-col>
+        </b-row>
         <h3>Create rooms</h3>
         <b-form @submit.prevent="createRoom" class="form-create text-left">
             <b-form-group

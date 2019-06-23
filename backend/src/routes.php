@@ -10,26 +10,6 @@ use Lcobucci\JWT\ValidationData;
 
 // --- NOT SECURED ROUTES ---
 
-$app->get('/', function (Request $request, Response $response, array $args) {
-    return $response->withJson(['message' => 'Hello World!'], 200);
-});
-
-$app->get('/test-db', function (Request $request, Response $response, array $args) {
-    $stmt = $this->db->query('SELECT * FROM user');
-    return $response->withJson($stmt->fetchAll());
-});
-
-$app->get('/api/pokus', function (Request $request, Response $response, array $args) {
-    try {
-        $rm = new Rooms($this->db);
-        $rm->add('Pokus mistnost 1', 1);
-        $rm->add('Pokus mistnost 2', 1);
-        return $response->withJson($rm->all());
-    } catch (Exception $ex) {
-        exit($ex->getMessage());
-    }
-});
-
 $app->post('/api/register',
     function (Request $request,
               Response $response,
@@ -198,6 +178,22 @@ $app->group('/api/auth', function() use ($app) {
         }
     });
 
+    $app->post('/removeKick', function (Request $request, Response $response, array $args) {
+        $rm = new Users($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['roomId'])) {
+                $rm->removeKick($data['userId'], $data['roomId']);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
     $app->post('/deleteUserFromRoom', function (Request $request, Response $response, array $args) {
         $rm = new Rooms($this->db);
         try {
@@ -262,6 +258,22 @@ $app->group('/api/auth', function() use ($app) {
         }
     });
 
+    $app->put('/updateOwner', function (Request $request, Response $response, array $args) {
+        $rm = new Rooms($this->db);
+        try {
+            $data = $request->getParsedBody();
+            if(!empty($data['roomId'])) {
+                $rm->updateOwner($data['userId'], $data['roomId']);
+                return $response->withStatus(201);
+            } else {
+                return $response->withStatus(400);
+            }
+        } catch (Exception $ex) {
+            $this->logger->error($ex->getMessage());
+            return $response->withStatus(500);
+        }
+    });
+
     $app->post('/saveMessage', function (Request $request, Response $response, array $args) {
         $rm = new Messages($this->db);
         try {
@@ -269,7 +281,7 @@ $app->group('/api/auth', function() use ($app) {
             if(!empty($data['text'])) {
                 $token = $request->getAttribute('token');
                 $userId = $token->getClaim('id');
-                $rm->saveMessage($data['roomId'], $userId, $data['text']);
+                $rm->saveMessage($data['roomId'], $userId, $data['text'], $data['recipient']);
                 return $response->withStatus(201);
             } else {
                 return $response->withStatus(400);
@@ -338,18 +350,11 @@ $app->group('/api/auth', function() use ($app) {
 
     });
 
-    $app->get('/userKick', function (Request $request, Response $response, array $args) {
+    $app->get('/kicks', function (Request $request, Response $response, array $args) {
         $rm = new Rooms($this->db);
         try {
-            $token = $request->getAttribute('token');
-            $userId = $token->getClaim('id');
-            $data = $request->getParsedBody();
-//            if(!empty($data['roomId'])) {
-                $data = $rm->userKick(1, $data['roomId']);
-                return $response->withJson($data);
-//            } else {
-//                return $response->withStatus(400);
-//            }
+            $kickData = $rm->kicks();
+            return $response->withJson($kickData);
         } catch (Exception $ex) {
             $this->logger->error($ex->getMessage());
             return $response->withStatus(500);

@@ -10,14 +10,15 @@ WHERE id_rooms = :id ORDER BY created');
         return $stmt->fetchAll();
     }
 
-    function saveMessage($idRoom, $idOwner, $message) {
+    function saveMessage($idRoom, $idOwner, $message, $to) {
         $stmt = $this->db->prepare('INSERT INTO messages '
             . '(id_rooms, id_users_from, id_users_to, created, message)'
             . ' VALUES '
-            . '(:idRoom, :idOwner, NULL, NOW(), :message)');
+            . '(:idRoom, :sender, :recipient, NOW(), :message)');
         $stmt->bindValue(':idRoom', $idRoom);
-        $stmt->bindValue(':idOwner', $idOwner);
+        $stmt->bindValue(':sender', $idOwner);
         $stmt->bindValue(':message', $message);
+        $stmt->bindValue(':recipient', $to);
         return $stmt->execute();
     }
 
