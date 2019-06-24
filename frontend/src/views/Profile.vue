@@ -43,7 +43,7 @@
                     <b-form-input
                             id="email"
                             v-model="userData.email"
-                            type="text"
+                            type="email"
                             required
                     ></b-form-input>
                 </b-form-group>
@@ -102,7 +102,8 @@
                     surname: this.userData.surname,
                     email: this.userData.email,
                     gender: this.gender
-                }).then(() => { window.location.reload();
+                }).then(() => {
+                    window.location.reload();
                     }
                 )
             }

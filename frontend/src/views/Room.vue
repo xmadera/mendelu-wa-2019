@@ -8,34 +8,45 @@
             </b-col>
         </b-row>
 
-        <template v-if="userData.id_users == roomData.id_users_owner">
-
-            <b-row align-h="end" class="adminSettings">
-
-            <b-col cols="4">
-                <div v-if="roomData.lock == false">
-                    <b-button type="submit" variant="info" class="btn btn-sm" v-on:click="lockRoom">
-                        <font-awesome-icon icon="lock-open"/> Lock room
-                    </b-button>
-                </div>
-                <div v-else>
-                    <b-button type="submit" variant="info" class="btn btn-sm" v-on:click="unlockRoom">
-                        <font-awesome-icon icon="lock"/> Unlock room
-                    </b-button>
-                </div>
-            </b-col>
-            <b-col cols="2">
-            <b-button type="submit" variant="danger" class="btn btn-sm" v-on:click="deleteRoom">
-
-            <font-awesome-icon icon="trash"/> Delete room
-        </b-button>
-            </b-col>
-            </b-row>
-    </template>
 
         <b-row align-h="between" class="mt-5">
-            <b-col cols="5">
+            <b-col sm="5" cols="12">
                 <h1>Room {{roomData.title}}</h1>
+
+
+                <template v-if="userData.id_users == roomData.id_users_owner">
+
+                    <b-row align-h="center">
+
+                        <b-col cols="4">
+                            <div v-if="roomData.lock == false" class="mb-3">
+                                <b-button type="submit" variant="info" class="btn btn-sm" v-on:click="lockRoom">
+                                    <font-awesome-icon icon="lock-open"/> Lock room
+                                </b-button>
+                            </div>
+                            <div v-else>
+                                <b-button type="submit" variant="info" class="btn btn-sm" v-on:click="unlockRoom">
+                                    <font-awesome-icon icon="lock"/> Unlock room
+                                </b-button>
+                            </div>
+                        </b-col>
+                            <b-col cols="4">
+
+                            <div v-if="usersInRoom.length == 1">
+                                <b-button type="submit" variant="danger" class="btn btn-sm" v-on:click="deleteRoom">
+                                    <font-awesome-icon icon="trash"/> Delete room
+                                </b-button>
+                            </div>
+                            <div v-else>
+                                <b-button type="submit" variant="danger" class="btn btn-sm" disabled>
+                                    <font-awesome-icon icon="trash"/> Delete room
+                                </b-button>
+                            </div>
+                        </b-col>
+                    </b-row>
+                </template>
+
+
                 <b>Owner:</b>
                 <div v-for="user in usersData">
                     <div v-if="user.id_users == roomData.id_users_owner">
@@ -70,15 +81,24 @@
                     </div>
                     </b-row>
                 </div>
+                    <div v-if="kickData.length == 0">
+                        None
+                    </div>
                 </div>
             </b-col>
-            <b-col cols="7">
+            <b-col sm="7" cols="12" class="mt-2">
         <div v-if="messages.length > 0" class="chat" id="style-5">
             <div v-for="message in messages">
-        <div class="person1 text-left mt-2" v-if="message.login == userData.login">
+        <div class="toAll text-left mt-2" v-if="message.login == userData.login">
             {{message.created.substring(11,16)}}<b> {{message.login}}</b>: {{message.message}}
         </div>
-            <div class="person2 text-right mt-2" v-else-if="message.id_users_to == null || message.id_users_to == userdData.id_users">
+                <div class="whisper text-left mt-2" v-else-if="message.id_users_to != null && message.id_users_to != userData.id_users">
+                    {{message.created.substring(11,16)}} <b> {{message.login}}</b>: {{message.message}}
+                </div>
+                <div class="whisper text-right mt-2" v-else-if="message.id_users_to == userData.id_users">
+                {{message.created.substring(11,16)}} <b> {{message.login}}</b>: {{message.message}}
+            </div>
+            <div class="toAll text-right mt-2" v-else-if="message.id_users_to == null">
                 {{message.created.substring(11,16)}} <b> {{message.login}}</b>: {{message.message}}
             </div>
             </div>
@@ -129,6 +149,7 @@
                 usersInRoom: [],
                 reloader: null,
                 reloaderremoveUser: null,
+                reloaderRemoveRoom: null,
                 userData: '',
                 usersData: [],
                 roomData: '',
@@ -139,54 +160,68 @@
             }
         },
 
-        // po nacteni komponenty
         mounted() {
             const roomId = this.$route.params.id;
             this.roomId = roomId;
 
             this.user();
-            this.users();
             this.room();
-
 
             this.reloader = setInterval(() => {
             this.Kicks();
-            this.checkKicks();
+            this.isAllowed();
+
+
             this.inRoom();
             this.users();
             this.room();
-            this.isAllowed();
             this.loadMessages();
-        }, 1000); // zavola metodu pro stazeni dat kazdou vterinu
 
-            this.reloaderremoveUser = setInterval(() => {
-                const time = 500 * 60 * 60;
+            }, 1000);
+
+            this.reloaderRemoveUser = setInterval(() => {
+                let time = 500 * 60 * 60;
                 var k=0;
                 if (this.messages.length > 0) {
 
                     for (let i = 0; i < this.messages.length; i++) {
-                        console.log(Date.now() - Date.parse(this.messages[0].created));
                         if (this.messages[i].id_users == this.userData.id_users) {
                             this.userMessages[k] = this.messages[i];
                             k++;
                         }
                     }
 
-                    const minus = Date.now() - 216000 - Date.parse(this.messages[this.messages.length-1].created);
+                    let minus = Date.now() - 216000 - Date.parse(this.userMessages[this.userMessages.length-1].created);
 
                     if (minus > time) {
-                        console.log(minus);
                         this.deleteUserFromRoom(this.userData.id_users);
                         this.$router.push({name: 'rooms'});
-                        alert("You have been kicked due to inactivity");
-                        }
+                        alert("You have been kicked from " + this.roomData.title +" due to inactivity");
+                        clearInterval(this.reloaderRemoveUser);
+                    }
                 }
-            }, 500 * 60 * 50); // zavola metodu pro stazeni dat
+            }, 501 * 60 * 60);
+
+
+            this.reloaderRemoveRoom = setInterval(() => {
+                let time = 500 * 60 * 60 * 12;
+                    if (this.messages.length > 0) {
+                        let minus = Date.now() - 216000 - Date.parse(this.messages[this.messages.length - 1].created);
+
+                        if (minus > time) {
+                            this.deleteRoom();
+                            clearInterval(this.reloaderRemoveRoom);
+                        }
+                    } else {
+                        this.deleteRoom();
+                        clearInterval(this.reloaderRemoveRoom);
+                    }
+            }, 501 * 60 * 60 * 12);
+
+
     },
-        // pred zrusenim komponenty
         beforeDestroy() {
             clearInterval(this.reloader);
-            clearInterval(this.reloaderremoveUser);
         },
         methods: {
             loadMessages() {
@@ -199,6 +234,8 @@
             deleteRoom() {
                 this.$http.delete('api/auth/deleteRoom/' + this.roomId)
                 .then(() => {
+                    clearInterval(this.reloaderRemoveRoom);
+                    clearInterval(this.reloaderRemoveUser);
                     alert("Room deleted");
                     this.$router.push({name: 'rooms'});
                 }).catch(() => {
@@ -212,7 +249,8 @@
                     text: this.text,
                     recipient: this.selected
                 }).then(() => {
-                        this.text = "";
+                    this.loadMessages();
+                    this.text = "";
                     }
                 ).catch(() => {
                     alert("Error");
@@ -231,6 +269,7 @@
                     roomId: this.roomId,
                     userId: id
                 }).then(() => {
+                    clearInterval(this.reloaderRemoveUser);
                     }
                 ).catch(() => {
                     alert("Error deleting user from room");
@@ -307,15 +346,6 @@
                     })
             },
 
-            checkKicks() {
-                for (let i = 0; i < this.kickData.length; i++) {
-                    if (this.kickData[i].id_rooms == this.roomId && this.kickData[i].id_users == this.userData.id_users) {
-                        this.$router.push({ name: 'rooms' });
-                        alert("You have been kicked");
-                    }
-                }
-            },
-
             isAllowed() {
                 if (this.roomData.lock == true) {
                     for (let i = 0; i < this.usersInRoom.length; i++) {
@@ -323,6 +353,13 @@
                             this.$router.push({name: 'rooms'});
                             alert("This room is locked");
                         }
+                    }
+                }
+
+                for (let i = 0; i < this.kickData.length; i++) {
+                    if (this.kickData[i].id_rooms == this.roomId && this.kickData[i].id_users == this.userData.id_users) {
+                        this.$router.push({ name: 'rooms' });
+                        alert("You have been kicked");
                     }
                 }
                 },
@@ -368,7 +405,7 @@
                         for (let i = 0; i < this.usersInRoom.length; i++) {
                              this.possibleOwners[i] = this.usersInRoom[i].id_users;
                         }
-                        var rand = this.possibleOwners[Math.floor(Math.random() * this.possibleOwners.length)];
+                        let rand = this.possibleOwners[Math.floor(Math.random() * this.possibleOwners.length)];
                         this.updateOwner(rand);
                 }
             }
@@ -401,14 +438,14 @@
         border-radius: 10px;
     }
 
-    .person1 {
+    .toAll {
         background:rgba(255,255,255, 0.9);
         padding: 0.5em;
         border-radius: 10px;
     }
 
-    .person2 {
-        background:rgba(255,255,255, 0.8);
+    .whisper {
+        background:rgba(200,200,200, 0.9);
         padding: 0.5em;
         border-radius: 10px;
     }
@@ -439,8 +476,5 @@
         color-stop(.5, transparent), to(transparent));
     }
 
-    .adminSettings {
-        margin-top: -1.5em;
-    }
 
 </style>

@@ -42,10 +42,10 @@
                     title: this.name
                 }).then(() => {
                     this.name = "";
-                    alert("Mistnost vytvorena");
+                    alert("Room created");
                     this.$router.push({name: 'rooms'});
                 }).catch(() => {
-                    alert("Chyba");
+                    alert("Error while creating room");
                 })
             }
 
