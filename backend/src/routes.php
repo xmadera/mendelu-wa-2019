@@ -166,7 +166,7 @@ $app->group('/api/auth', function() use ($app) {
         $rm = new Users($this->db);
         try {
             $data = $request->getParsedBody();
-            if(!empty($data['roomId'])) {
+            if(!empty($data['roomId']) AND !empty($data['userId'])) {
                 $rm->kickUser($data['userId'], $data['roomId']);
                 return $response->withStatus(201);
             } else {
@@ -182,7 +182,7 @@ $app->group('/api/auth', function() use ($app) {
         $rm = new Users($this->db);
         try {
             $data = $request->getParsedBody();
-            if(!empty($data['roomId'])) {
+            if(!empty($data['roomId']) AND !empty($data['userId'])) {
                 $rm->removeKick($data['userId'], $data['roomId']);
                 return $response->withStatus(201);
             } else {
@@ -230,7 +230,7 @@ $app->group('/api/auth', function() use ($app) {
         $rm = new Users($this->db);
         try {
             $data = $request->getParsedBody();
-            if(!empty($data['userLogin']) AND !empty($data['gender'])) {
+            if(!empty($data['userLogin']) AND !empty($data['gender']) AND !empty($data['name']) AND !empty($data['surname']) AND !empty($data['email'])) {
                 $rm->updateUser($data['userLogin'], $data['name'], $data['surname'], $data['email'], $data['gender']);
                 return $response->withStatus(201);
             } else {
@@ -262,7 +262,7 @@ $app->group('/api/auth', function() use ($app) {
         $rm = new Rooms($this->db);
         try {
             $data = $request->getParsedBody();
-            if(!empty($data['roomId'])) {
+            if(!empty($data['roomId']) AND !empty($data['userId'])) {
                 $rm->updateOwner($data['userId'], $data['roomId']);
                 return $response->withStatus(201);
             } else {
@@ -278,7 +278,7 @@ $app->group('/api/auth', function() use ($app) {
         $rm = new Messages($this->db);
         try {
             $data = $request->getParsedBody();
-            if(!empty($data['text'])) {
+            if(!empty($data['text']) AND !empty($data['roomId'])) {
                 $token = $request->getAttribute('token');
                 $userId = $token->getClaim('id');
                 $rm->saveMessage($data['roomId'], $userId, $data['text'], $data['recipient']);

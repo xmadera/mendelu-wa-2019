@@ -37,6 +37,7 @@
             }
         },
         methods: {
+            // Create new room
             createRoom() {
                 this.$http.post('/api/auth/rooms', {
                     title: this.name

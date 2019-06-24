@@ -119,7 +119,7 @@
     methods: {
       register() {
         if(this.password1 != this.password2) {
-          alert('Hesla se neshoduji.');
+          alert('Passwords do not match.');
           return;
         }
         this.$http.post('api/register', {
@@ -132,7 +132,7 @@
         }).then(() => {
           this.$router.push({ name: 'login' });
         }, () => {
-          alert('Chyba registrace');
+          alert('Error');
         });
       }
     }

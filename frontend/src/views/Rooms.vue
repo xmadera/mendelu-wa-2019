@@ -61,12 +61,14 @@ export default {
   },
 
     methods: {
+        // Load data aboout all rooms
         loadRooms() {
             this.$http.get('api/auth/rooms')
                 .then(response => {
                     this.rooms = response.data;
                 });
         },
+      // Save user into certain room
       saveUserInRoom(id) {
         this.$http.post('/api/auth/saveUserInRoom', {
           roomId: id
@@ -75,7 +77,7 @@ export default {
         ).catch(() => {
         })
       },
-
+      // Load data about all kicks
       Kicks() {
         this.$http.get('api/auth/kicks', {
         })
@@ -83,13 +85,14 @@ export default {
                   this.kickData = response.data;
                 })
       },
-
+      // Load data about user
       user() {
         this.$http.get('api/auth/user')
                 .then(response => {
                   this.userData = response.data;
                 })
       },
+      // Determine if user is kicked from certain room
       isKicked(id) {
         for (let i = 0; i < this.kickData.length; i++) {
           if (this.kickData[i].id_rooms == id && this.kickData[i].id_users == this.userData.id_users) {

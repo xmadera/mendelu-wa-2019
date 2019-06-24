@@ -5,7 +5,7 @@
       Rooms
     </router-link>
     <template v-if="!isLoggedIn">
-      Welcome, to get access to our chatting rooms, please register
+      Welcome, to gain access to our chatting rooms, please register
     </template>
     <router-link v-if="!isLoggedIn" :to="{ name: 'register' }">
       here.

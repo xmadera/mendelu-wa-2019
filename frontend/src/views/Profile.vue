@@ -8,7 +8,7 @@
             </b-col>
         </b-row>
         <h3>{{userData.login}}</h3>
-        <b-form @submit.prevent="editUser" class="form-create text-left">
+        <b-form @submit.prevent="updateUser" class="form-create text-left">
         <b-row align-h="center" class="mt-5">
             <b-col cols="5">
                     <b-form-group
@@ -52,18 +52,17 @@
                 <b-form-group
                         label="Gender:"
                         label-for="gender">
-                    <b-form-select
-                            id="gender"
-                            v-model="gender"
-                            :options="Genders"
-                            type="text"
-                            required
-                    ></b-form-select>
+                    <b-form-select v-model="selected" required>
+                        <template slot="first">
+                            <option :value="null">Select one</option>
+                        </template>
+                        <option v-for="gender in Genders" :value="gender.value">{{gender.text}}</option>
+                    </b-form-select>
                 </b-form-group>
             </b-col>
         </b-row>
             <div class="text-center">
-                <b-button type="submit" variant="outline-primary" v-on:click="updateUser">
+                <b-button type="submit" variant="outline-primary">
                     <font-awesome-icon icon="plus-square" />
                     Edit
                 </b-button>
@@ -78,8 +77,8 @@
         data() {
             return {
                 userData: '',
-                gender: null,
-                Genders: [{ text: 'Select One', value: null },"male", "female"]
+                selected: null,
+                Genders: [{ text: 'Male', value: 'male' },{ text: 'Female', value: 'female'}]
             }
         },
 
@@ -88,24 +87,27 @@
         },
 
         methods: {
+            // Load data about user
             user: function () {
                 this.$http.get('api/auth/user')
                     .then(response => {
                         this.userData = response.data;
                     })
             },
-
+            // update user
             updateUser: function() {
-                this.$http.put('/api/auth/updateUser', {
-                    userLogin: this.userData.login,
-                    name: this.userData.name,
-                    surname: this.userData.surname,
-                    email: this.userData.email,
-                    gender: this.gender
-                }).then(() => {
-                    window.location.reload();
-                    }
-                )
+                if (this.selected != null) {
+                    this.$http.put('/api/auth/updateUser', {
+                        userLogin: this.userData.login,
+                        name: this.userData.name,
+                        surname: this.userData.surname,
+                        email: this.userData.email,
+                        gender: this.selected
+                    }).then(() => {
+                            window.location.reload();
+                        }
+                    )
+                }
             }
         }
     }

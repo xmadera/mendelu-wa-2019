@@ -10,8 +10,11 @@
 
 
         <b-row align-h="between" class="mt-5">
-            <b-col sm="5" cols="12">
+            <b-col md="5" cols="12">
                 <h1>Room {{roomData.title}}</h1>
+                <div v-if="roomData.lock" class="mb-1">
+                    (Locked)
+                </div>
 
 
                 <template v-if="userData.id_users == roomData.id_users_owner">
@@ -19,7 +22,7 @@
                     <b-row align-h="center">
 
                         <b-col cols="4">
-                            <div v-if="roomData.lock == false" class="mb-3">
+                            <div v-if="!roomData.lock" class="mb-3">
                                 <b-button type="submit" variant="info" class="btn btn-sm" v-on:click="lockRoom">
                                     <font-awesome-icon icon="lock-open"/> Lock room
                                 </b-button>
@@ -86,10 +89,10 @@
                     </div>
                 </div>
             </b-col>
-            <b-col sm="7" cols="12" class="mt-2">
+            <b-col md="7" cols="12" class="mt-2">
         <div v-if="messages.length > 0" class="chat" id="style-5">
             <div v-for="message in messages">
-        <div class="toAll text-left mt-2" v-if="message.login == userData.login">
+        <div class="toAll text-left mt-2" v-if="message.id_users_to == null && message.id_users_from == userData.id_users">
             {{message.created.substring(11,16)}}<b> {{message.login}}</b>: {{message.message}}
         </div>
                 <div class="whisper text-left mt-2" v-else-if="message.id_users_to != null && message.id_users_to != userData.id_users">
@@ -166,21 +169,24 @@
 
             this.user();
             this.room();
+            this.inRoom();
+
 
             this.reloader = setInterval(() => {
             this.Kicks();
+            this.inRoom();
             this.isAllowed();
 
 
-            this.inRoom();
             this.users();
             this.room();
             this.loadMessages();
 
-            }, 1000);
+            }, 1000); // Load data every 1000 ms
 
+            // Remove user after 30 min of inactivity
             this.reloaderRemoveUser = setInterval(() => {
-                let time = 500 * 60 * 60;
+                let time = 1000 * 60 * 60;
                 var k=0;
                 if (this.messages.length > 0) {
 
@@ -200,11 +206,11 @@
                         clearInterval(this.reloaderRemoveUser);
                     }
                 }
-            }, 501 * 60 * 60);
+            }, 1001 * 60 * 60);
 
-
+            // Delete room after 12 hours of inactivity
             this.reloaderRemoveRoom = setInterval(() => {
-                let time = 500 * 60 * 60 * 12;
+                let time = 1000 * 60 * 60 * 12;
                     if (this.messages.length > 0) {
                         let minus = Date.now() - 216000 - Date.parse(this.messages[this.messages.length - 1].created);
 
@@ -216,7 +222,7 @@
                         this.deleteRoom();
                         clearInterval(this.reloaderRemoveRoom);
                     }
-            }, 501 * 60 * 60 * 12);
+            }, 1001 * 60 * 60 * 12);
 
 
     },
@@ -224,6 +230,7 @@
             clearInterval(this.reloader);
         },
         methods: {
+            // load all messages for this room
             loadMessages() {
                 this.$http.get('api/auth/messages/' + this.roomId)
                     .then(response => {
@@ -232,6 +239,7 @@
             },
 
             deleteRoom() {
+                // Delete this room
                 this.$http.delete('api/auth/deleteRoom/' + this.roomId)
                 .then(() => {
                     clearInterval(this.reloaderRemoveRoom);
@@ -242,7 +250,7 @@
                     alert("Error deleting room");
                 })
             },
-
+            // save message for this room
             saveMessage() {
                 this.$http.post('/api/auth/saveMessage', {
                     roomId: this.roomId,
@@ -256,14 +264,14 @@
                     alert("Error");
                 })
             },
-
+            // Select all users in the room
             inRoom() {
                 this.$http.get('api/auth/users/' + this.roomId)
                     .then(response => {
                         this.usersInRoom = response.data;
                     })
                 },
-
+            // Delete selected user from this room
             deleteUserFromRoom(id) {
                 this.$http.post('/api/auth/deleteUserFromRoom', {
                     roomId: this.roomId,
@@ -275,7 +283,7 @@
                     alert("Error deleting user from room");
                 })
             },
-
+            // Kick selected user from this room
             kickUser(id) {
                 this.$http.post('/api/auth/kickUser', {
                     roomId: this.roomId,
@@ -286,7 +294,7 @@
                     alert("Error kicking user");
                 })
             },
-
+            // Remove kick from selected user for this room
             removeKick(id) {
                 this.$http.post('/api/auth/removeKick', {
                     roomId: this.roomId,
@@ -297,28 +305,28 @@
                     alert("Error removing kick");
                 })
             },
-
+            // Load data about user
             user() {
                 this.$http.get('api/auth/user')
                     .then(response => {
                         this.userData = response.data;
                     })
             },
-
+            // Load data about all users
             users() {
                 this.$http.get('api/auth/users')
                     .then(response => {
                         this.usersData = response.data;
                     })
             },
-
+            // Load data about this room
             room() {
                 this.$http.get('api/auth/rooms/' + this.roomId)
                     .then(response => {
                         this.roomData = response.data;
                     })
             },
-
+            // Lock this room
             lockRoom() {
                 this.$http.put('/api/auth/lockRoom', {
                     roomId: this.roomId
@@ -328,6 +336,7 @@
                     alert("Error while locking room");
                 })
             },
+            // Unlock this room
             unlockRoom() {
                 this.$http.put('/api/auth/unlockRoom', {
                     roomId: this.roomId
@@ -337,7 +346,7 @@
                     alert("Error while unlocking room");
                 })
             },
-
+            // Load data about all kicks
             Kicks() {
                 this.$http.get('api/auth/kicks', {
                 })
@@ -345,15 +354,17 @@
                         this.kickData = response.data;
                     })
             },
-
+            // Determine if user is allowed to be in this room
             isAllowed() {
                 if (this.roomData.lock == true) {
                     for (let i = 0; i < this.usersInRoom.length; i++) {
-                        if (this.usersInRoom[i].id_users != this.userData.id_users) {
-                            this.$router.push({name: 'rooms'});
-                            alert("This room is locked");
+                        if (this.usersInRoom[i].id_users == this.userData.id_users) {
+                            return;
                         }
                     }
+                    this.$router.push({name: 'rooms'});
+                    alert("This room is locked");
+                    return;
                 }
 
                 for (let i = 0; i < this.kickData.length; i++) {
@@ -363,7 +374,7 @@
                     }
                 }
                 },
-
+            // Handle kicking user out of this room
             handler: function(id) {
                 this.deleteUserFromRoom(id);
                 this.kickUser(id);
@@ -372,14 +383,14 @@
                     this.removeKick(id)
                 }, 300000);
             },
-
+            // Handle user leaving this room
             handlerLeave: function(id) {
                 this.deleteUserFromRoom(id);
                 if (id == this.roomData.id_users_owner) {
                     this.ownerLeaves();
                 }
             },
-
+            // determine if user is kicked out of this room
             isKicked(id) {
                 for (let i = 0; i < this.kickData.length; i++) {
                     if (this.kickData[i].id_rooms == this.roomId && this.kickData[i].id_users == id) {
@@ -388,7 +399,7 @@
                 }
                 return false;
             },
-
+            // Updates owner if owner leaves this room
             updateOwner(id) {
                 this.$http.put('/api/auth/updateOwner', {
                     roomId: this.roomId,
@@ -399,7 +410,7 @@
                     alert("Error while updating owner");
                 })
             },
-
+            // Determine if owner leaves this room
             ownerLeaves() {
                     if (this.usersInRoom.length > 0) {
                         for (let i = 0; i < this.usersInRoom.length; i++) {
